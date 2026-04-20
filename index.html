@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Office &mdash; Character Importance Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lora:ital,wght@0,400;0,700;1,700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <h1>THE OFFICE</h1>
+      <p class="tagline">a character importance dashboard</p>
+    </div>
+    <div class="brand-meta">
+      <span>NBC &middot; 2005&ndash;2013 &middot; 9 Seasons &middot; 186 Episodes</span>
+    </div>
+  </header>
+
+  <section class="overview">
+    <div class="overview-text">
+      <h2>About the show</h2>
+      <p>
+        <em>The Office</em> (US) is a mockumentary sitcom that aired on
+        <strong>NBC</strong> from <strong>March 24, 2005</strong> to
+        <strong>May 16, 2013</strong>. Adapted from the British series of the same name,
+        the show follows the day-to-day lives of the employees at the
+        <strong>Dunder Mifflin Paper Company</strong> branch in Scranton, Pennsylvania,
+        filmed in faux-documentary style.
+      </p>
+      <p>
+        Across <strong>9 seasons and 186 episodes</strong>, the ensemble is anchored by
+        regional manager <strong>Michael Scott</strong> (Steve Carell, S1&ndash;7),
+        salesman <strong>Jim Halpert</strong>, receptionist (later artist/sales rep)
+        <strong>Pam Beesly</strong>, and eccentric beet-farming salesman
+        <strong>Dwight Schrute</strong>. Around them rotates a deep cast of
+        accountants, salespeople, warehouse staff, and corporate types &mdash;
+        Andy, Angela, Kevin, Oscar, Stanley, Phyllis, Kelly, Ryan, Toby, Erin,
+        Darryl and many more.
+      </p>
+    </div>
+    <aside class="overview-stats">
+      <div class="stat"><div class="stat-num">9</div><div class="stat-lbl">Seasons</div></div>
+      <div class="stat"><div class="stat-num">186</div><div class="stat-lbl">Episodes</div></div>
+      <div class="stat"><div class="stat-num">2005&ndash;13</div><div class="stat-lbl">On Air</div></div>
+      <div class="stat"><div class="stat-num">NBC</div><div class="stat-lbl">Network</div></div>
+      <div class="stat stat-wide"><div class="stat-num">Mockumentary&nbsp;Sitcom</div><div class="stat-lbl">Genre</div></div>
+    </aside>
+  </section>
+
+  <section class="controls">
+    <div class="control-group">
+      <label for="season-select">Season filter</label>
+      <select id="season-select">
+        <option value="all">All seasons</option>
+        <option value="1">Season 1</option>
+        <option value="2">Season 2</option>
+        <option value="3">Season 3</option>
+        <option value="4">Season 4</option>
+        <option value="5">Season 5</option>
+        <option value="6">Season 6</option>
+        <option value="7">Season 7</option>
+        <option value="8">Season 8</option>
+        <option value="9">Season 9</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <span class="control-label">Rank characters by</span>
+      <div class="metric-toggle" role="radiogroup" aria-label="Rank characters by">
+        <label><input type="radio" name="metric" value="lines" checked /> Lines spoken</label>
+        <label><input type="radio" name="metric" value="words" /> Words spoken</label>
+        <label><input type="radio" name="metric" value="episodes" /> Episodes appeared</label>
+      </div>
+    </div>
+    <div class="control-group control-actions">
+      <button id="reset-btn" type="button">Reset selection</button>
+    </div>
+  </section>
+
+  <section class="viz">
+    <div class="panel panel-bar">
+      <h3>Character importance <span class="panel-sub" id="bar-subtitle">&mdash; all seasons</span></h3>
+      <p class="caption">
+        Click any bar (or character name) to spotlight that character in the heatmap.
+        Use the toggle above to rank by lines, words, or episode appearances.
+      </p>
+      <div id="bar-chart" class="chart"></div>
+    </div>
+
+    <div class="panel panel-heatmap">
+      <h3>Episode-by-episode appearances</h3>
+      <p class="caption">
+        Each cell is one episode (left&nbsp;&rarr;&nbsp;right = chronological).
+        Color intensity shows how many lines that character spoke. Click a season label to filter; hover any cell for details.
+      </p>
+      <div id="heatmap" class="chart"></div>
+    </div>
+  </section>
+
+  <section class="design-notes">
+    <details>
+      <summary><strong>Design notes &amp; justification</strong> (click to expand)</summary>
+      <div class="notes-body">
+        <h4>Tasks supported</h4>
+        <ol>
+          <li><strong>Show overview</strong> &mdash; the header and stats panel give the network, run dates, season/episode counts, genre, and a short prose intro to the central characters.</li>
+          <li><strong>Importance overall &amp; per-season</strong> &mdash; the bar chart ranks characters by either lines, words, or episodes appeared. The season dropdown (and clicking a season label in the heatmap) re-computes the ranking for just that season, so a viewer can compare e.g. Andy in S8 vs. the show as a whole.</li>
+          <li><strong>Per-episode appearances for major characters</strong> &mdash; the heatmap shows one row per major character and one column per episode, color-encoded by lines spoken in that episode. Empty (gray) cells = the character didn&rsquo;t speak that episode. Season dividers segment the timeline.</li>
+        </ol>
+        <h4>Visual encoding choices</h4>
+        <ul>
+          <li><strong>Horizontal bar chart</strong> for ranked importance: bar length is the most accurate visual channel for quantitative comparison, and horizontal bars give long character names room to breathe.</li>
+          <li><strong>Heatmap</strong> for character &times; episode: with ~25 characters &times; 186 episodes (~4,650 cells), a heatmap is the most space-efficient way to expose appearance patterns &mdash; you can see seasons where a character vanishes (Michael after S7), recurring guests, and standout episodes (high-line bursts) at a glance.</li>
+          <li><strong>Square-root color scale</strong> on the heatmap so a few high-line "Michael episodes" don&rsquo;t crush the rest of the palette into invisibility.</li>
+          <li><strong>Brushing &amp; linking</strong>: selecting a character in the bar chart highlights its row in the heatmap; choosing a season in the dropdown both re-ranks the bar chart and dims non-matching episodes in the heatmap. This keeps the two views consistent and supports answering "who matters in S6?" and "where in S6 did Andy actually show up?" together.</li>
+          <li><strong>Tooltips</strong> for details-on-demand instead of cluttering the chart with labels.</li>
+          <li><strong>Wikipedia link</strong> next to each bar (the small <span class="wiki-icon-inline">w</span>) for the optional "link out" requirement.</li>
+        </ul>
+        <h4>Who is included</h4>
+        <p>
+          The dataset has hundreds of named speakers, most of whom appear once.
+          To keep the dashboard about meaningful characters we include only speakers
+          with <strong>&ge; 100 total lines</strong> AND appearing in
+          <strong>&ge; 5 episodes</strong>, then take the top characters by total lines
+          (capped at 25 to keep the heatmap readable).
+          Compound speakers like &ldquo;Jim &amp; Pam&rdquo; and group labels (&ldquo;Everyone&rdquo;,
+          &ldquo;All&rdquo;) are excluded; small typo variants
+          (&ldquo;Michael:&rdquo;, &ldquo;DeAngelo&rdquo;) are normalized to their canonical
+          form. This excludes one-line guest characters but keeps every recurring
+          character with a meaningful presence in at least a few episodes.
+        </p>
+        <h4>Theme</h4>
+        <p>
+          The cream/mustard/dark-brown palette and Bebas Neue title evoke the
+          show&rsquo;s opening titles and Dunder Mifflin&rsquo;s drab office aesthetic.
+        </p>
+      </div>
+    </details>
+  </section>
+
+  <footer class="site-footer">
+    <p>
+      Data: <code>The-Office-Lines-V4.csv</code> &middot;
+      Built with <a href="https://d3js.org">D3.js</a> &middot;
+      CS5124 Project 3
+    </p>
+  </footer>
+
+  <div id="tooltip" class="tooltip" style="opacity:0"></div>
+
+  <script src="js/d3.v6.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
