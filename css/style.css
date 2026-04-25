@@ -189,6 +189,8 @@ a:hover { color: var(--dark-brown); }
 .bar:hover { fill: var(--accent); }
 .bar.dim { fill: #c9bda6; }
 .bar.selected { fill: var(--mustard); stroke: var(--dark-brown); stroke-width: 1px; }
+.seasonal-bar { transition: opacity 120ms ease; }
+.seasonal-bar:hover { opacity: 0.85; }
 .val-label {
   font-size: 11px;
   fill: var(--dark-brown);

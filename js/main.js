@@ -549,16 +549,20 @@ function renderLevel2() {
     d3.select("#top-words-list").html('<div class="no-selection">Select a character to see word frequency</div>');
     d3.select("#phrases").html('<div class="no-selection">Select a character to see common phrases</div>');
     d3.select("#seasonal-chart").html('<div class="no-selection">Select a character to see seasonal patterns</div>');
+    d3.select("#season-select-l2").property("disabled", true);
     return;
   }
 
+  const filterSeason = state.l2Mode === "by-season" ? state.l2Season : "all";
+  d3.select("#season-select-l2").property("disabled", state.l2Mode !== "by-season");
+
   const charLines = allRows.filter(d => d.speaker === state.l2SelectedChar);
-  const wordData = extractWordsForCharacter(charLines, state.l2Season);
+  const wordData = extractWordsForCharacter(charLines, filterSeason);
   
-  renderWordCloud(wordData);
-  renderTopWordsList(wordData);
-  renderPhrases(charLines, state.l2Season);
-  renderSeasonalComparison(charLines);
+  renderWordCloud(wordData, filterSeason);
+  renderTopWordsList(wordData, filterSeason);
+  renderPhrases(charLines, filterSeason);
+  renderSeasonalComparison(charLines, filterSeason);
 }
 
 function extractWordsForCharacter(lines, seasonFilter) {
@@ -585,6 +589,11 @@ function extractWordsForCharacter(lines, seasonFilter) {
 }
 
 function renderWordCloud(wordData) {
+  if (!wordData || wordData.length === 0) {
+    d3.select("#wordcloud").html('<div class="no-selection">No matching words found for this selection</div>');
+    return;
+  }
+
   const top50 = wordData.slice(0, 50);
   const maxFreq = Math.max(...top50.map(d => d.freq));
   const minFreq = Math.min(...top50.map(d => d.freq));
@@ -594,6 +603,7 @@ function renderWordCloud(wordData) {
     .range([11, 32]);
 
   d3.select("#wordcloud").selectAll(".word-node").remove();
+  d3.select("#wordcloud").html('');
   
   d3.select("#wordcloud")
     .selectAll(".word-node")
@@ -611,9 +621,16 @@ function renderWordCloud(wordData) {
 
 function renderTopWordsList(wordData) {
   const top20 = wordData.slice(0, 20);
+
+  if (top20.length === 0) {
+    d3.select("#top-words-list").html('<div class="no-selection">No matching words found for this selection</div>');
+    return;
+  }
+
   const maxFreq = Math.max(...top20.map(d => d.freq));
 
   d3.select("#top-words-list").selectAll(".word-bar-item").remove();
+  d3.select("#top-words-list").html('');
 
   d3.select("#top-words-list")
     .selectAll(".word-bar-item")
@@ -684,14 +701,12 @@ function renderPhrases(lines, seasonFilter) {
     `);
 }
 
-function renderSeasonalComparison(lines) {
+function renderSeasonalComparison(lines, seasonFilter) {
   const seasonalData = [];
   
-  // Get top 8 words overall
-  const allWords = extractWordsForCharacter(lines, "all").slice(0, 8);
+  const allWords = extractWordsForCharacter(lines, seasonFilter).slice(0, 8);
   const topWords = allWords.map(d => d.word);
 
-  // Calculate frequency per season
   for (let season = 1; season <= 9; season++) {
     const seasonLines = lines.filter(d => d.season === season);
     if (seasonLines.length === 0) continue;
@@ -704,6 +719,11 @@ function renderSeasonalComparison(lines) {
       row[word] = entry ? entry.freq : 0;
     });
     seasonalData.push(row);
+  }
+
+  if (topWords.length === 0 || seasonalData.length === 0) {
+    d3.select("#seasonal-chart").html('<div class="no-selection">No seasonal comparison available for this selection</div>');
+    return;
   }
 
   const margin = { top: 10, right: 10, bottom: 40, left: 50 };
@@ -740,16 +760,15 @@ function renderSeasonalComparison(lines) {
     .domain(topWords)
     .range(colors);
 
-  // Draw grouped bars
   g.selectAll(".season-group")
     .data(seasonalData)
     .join("g")
     .attr("class", "season-group")
     .attr("transform", d => `translate(${x(d.season)},0)`)
-    .selectAll(".bar")
+    .selectAll(".seasonal-bar")
     .data(d => topWords.map(word => ({ word, freq: d[word], season: d.season })))
     .join("rect")
-    .attr("class", "bar")
+    .attr("class", "seasonal-bar")
     .attr("x", d => subX(d.word))
     .attr("y", d => y(d.freq))
     .attr("width", subX.bandwidth())
@@ -760,32 +779,29 @@ function renderSeasonalComparison(lines) {
     })
     .on("mouseout", hideTooltip);
 
-  // X axis
   g.append("g")
     .attr("transform", `translate(0,${height})`)
     .call(d3.axisBottom(x))
     .style("font-size", "11px");
 
-  // Y axis
   g.append("g")
     .call(d3.axisLeft(y).ticks(4))
     .style("font-size", "11px");
 
-  // Legend
   const legend = g.append("g")
     .attr("transform", `translate(${width - 120}, -8)`);
 
   topWords.forEach((word, i) => {
     legend.append("rect")
       .attr("x", 0)
-      .attr("y", i * 12)
-      .attr("width", 8)
-      .attr("height", 8)
+      .attr("y", i * 14)
+      .attr("width", 10)
+      .attr("height", 10)
       .attr("fill", colorScale(word));
 
     legend.append("text")
-      .attr("x", 12)
-      .attr("y", i * 12 + 7)
+      .attr("x", 14)
+      .attr("y", i * 14 + 9)
       .attr("font-size", "9px")
       .attr("fill", "#2e1f12")
       .text(word.substring(0, 12));
