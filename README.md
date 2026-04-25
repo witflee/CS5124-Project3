@@ -165,16 +165,6 @@ an, etc.) is filtered to focus analyses on meaningful vocabulary.
 Level 2 works on the same top 25 characters as Level 1, ensuring
 consistency across the dashboard.
 
-## Hosting on GitHub Pages
-1. Push this repo to GitHub (any branch — e.g. `main`).
-2. In the repo, go to **Settings → Pages**.
-3. Under "Build and deployment", set **Source = Deploy from a branch**
-   and choose **Branch: `main` / folder: `/ (root)`**, then **Save**.
-4. Wait ~1 minute, then visit
-   `https://<your-username>.github.io/CS5124-Project3/`.
-
-No build step is required — everything is static HTML / CSS / JS.
-
 ## Credits
 - Dataset: `The-Office-Lines-V4.csv` (transcribed dialogue from all 186
   episodes).
