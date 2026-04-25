@@ -2,6 +2,22 @@ const MIN_LINES_THRESHOLD     = 100;
 const MIN_EPISODES_THRESHOLD  = 5;
 const TOP_N_CHARACTERS        = 25;
 
+const STOPWORDS = new Set([
+  "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you", "your", "yours", "yourself",
+  "yourselves", "he", "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself",
+  "they", "them", "their", "theirs", "themselves", "what", "which", "who", "whom", "why", "how",
+  "all", "each", "every", "both", "few", "more", "most", "other", "some", "such", "no", "nor",
+  "not", "only", "own", "same", "so", "than", "too", "very", "can", "just", "should", "now",
+  "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "if", "in", "into", "is",
+  "it", "no", "not", "of", "on", "or", "such", "that", "the", "their", "then", "there",
+  "these", "they", "this", "to", "was", "will", "with", "has", "have", "had", "do", "does",
+  "did", "will", "would", "could", "should", "may", "might", "must", "can", "am", "being",
+  "been", "having", "doing", "up", "down", "out", "about", "over", "under", "again", "further",
+  "then", "once", "here", "there", "when", "where", "why", "how", "what", "which", "who", "whom",
+  "ok", "okay", "yeah", "yup", "nope", "uh", "um", "well", "um", "like", "you", "know", "get",
+  "got", "d", "s", "t", "ve", "re", "ll", "m"
+]);
+
 const NAME_FIXES = {
   "Michael:": "Michael",
   "DeAngelo": "Deangelo",
@@ -59,6 +75,9 @@ const state = {
   season: "all",
   metric: "lines",
   selectedChar: null,
+  l2Mode: "all",
+  l2SelectedChar: null,
+  l2Season: "all",
 };
 
 d3.select("#bar-chart").append("div").attr("class", "loading").text("Loading data…");
@@ -161,6 +180,40 @@ function setupControls() {
     d3.select("input[name='metric'][value='lines']").property("checked", true);
     render();
   });
+
+  // Level 2 controls
+  const charOptions = characters.map(c => c.name);
+  d3.select("#char-select-l2")
+    .selectAll("option")
+    .data(charOptions, d => d)
+    .join("option")
+    .attr("value", d => d)
+    .text(d => d);
+
+  d3.select("#char-select-l2").on("change", function () {
+    state.l2SelectedChar = this.value || null;
+    renderLevel2();
+  });
+
+  d3.selectAll("input[name='l2-mode']").on("change", function () {
+    state.l2Mode = this.value;
+    renderLevel2();
+  });
+
+  d3.select("#reset-l2-btn").on("click", () => {
+    state.l2SelectedChar = null;
+    state.l2Mode = "all";
+    state.l2Season = "all";
+    d3.select("#char-select-l2").property("value", "");
+    d3.select("input[name='l2-mode'][value='all']").property("checked", true);
+    d3.select("#season-select-l2").property("value", "all");
+    renderLevel2();
+  });
+
+  d3.select("#season-select-l2").on("change", function () {
+    state.l2Season = this.value;
+    renderLevel2();
+  });
 }
 
 function render() {
@@ -168,6 +221,7 @@ function render() {
   d3.select("#bar-subtitle").text(subtitle);
   renderBarChart();
   renderHeatmap();
+  renderLevel2();
 }
 
 function renderBarChart() {
@@ -485,4 +539,255 @@ function showTooltip(event, html) {
 }
 function hideTooltip() {
   d3.select("#tooltip").style("opacity", 0);
+}
+
+// ============ LEVEL 2: What do characters say? ============
+
+function renderLevel2() {
+  if (!state.l2SelectedChar) {
+    d3.select("#wordcloud").html('<div class="no-selection">Select a character to analyze what they say</div>');
+    d3.select("#top-words-list").html('<div class="no-selection">Select a character to see word frequency</div>');
+    d3.select("#phrases").html('<div class="no-selection">Select a character to see common phrases</div>');
+    d3.select("#seasonal-chart").html('<div class="no-selection">Select a character to see seasonal patterns</div>');
+    return;
+  }
+
+  const charLines = allRows.filter(d => d.speaker === state.l2SelectedChar);
+  const wordData = extractWordsForCharacter(charLines, state.l2Season);
+  
+  renderWordCloud(wordData);
+  renderTopWordsList(wordData);
+  renderPhrases(charLines, state.l2Season);
+  renderSeasonalComparison(charLines);
+}
+
+function extractWordsForCharacter(lines, seasonFilter) {
+  const wordFreq = new Map();
+  let totalWords = 0;
+
+  lines.forEach(line => {
+    if (seasonFilter !== "all" && line.season !== +seasonFilter) return;
+    
+    const words = line.line.toLowerCase()
+      .replace(/[^\w\s']/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 2 && !STOPWORDS.has(w));
+    
+    words.forEach(w => {
+      wordFreq.set(w, (wordFreq.get(w) || 0) + 1);
+      totalWords++;
+    });
+  });
+
+  return Array.from(wordFreq.entries())
+    .map(([word, freq]) => ({ word, freq, pct: (freq / totalWords * 100).toFixed(1) }))
+    .sort((a, b) => b.freq - a.freq);
+}
+
+function renderWordCloud(wordData) {
+  const top50 = wordData.slice(0, 50);
+  const maxFreq = Math.max(...top50.map(d => d.freq));
+  const minFreq = Math.min(...top50.map(d => d.freq));
+  
+  const sizeScale = d3.scaleLinear()
+    .domain([minFreq, maxFreq])
+    .range([11, 32]);
+
+  d3.select("#wordcloud").selectAll(".word-node").remove();
+  
+  d3.select("#wordcloud")
+    .selectAll(".word-node")
+    .data(top50, d => d.word)
+    .join("div")
+    .attr("class", "word-node")
+    .style("font-size", d => sizeScale(d.freq) + "px")
+    .style("opacity", d => 0.5 + (d.freq / maxFreq) * 0.5)
+    .text(d => d.word)
+    .on("mousemove", (event, d) => {
+      showTooltip(event, `<b>${d.word}</b><br>Frequency: ${d.freq}<br>${d.pct}% of dialogue`);
+    })
+    .on("mouseout", hideTooltip);
+}
+
+function renderTopWordsList(wordData) {
+  const top20 = wordData.slice(0, 20);
+  const maxFreq = Math.max(...top20.map(d => d.freq));
+
+  d3.select("#top-words-list").selectAll(".word-bar-item").remove();
+
+  d3.select("#top-words-list")
+    .selectAll(".word-bar-item")
+    .data(top20, d => d.word)
+    .join("div")
+    .attr("class", "word-bar-item")
+    .html(d => {
+      const pct = (d.freq / maxFreq) * 100;
+      return `
+        <div class="word-bar-label">${d.word}</div>
+        <div class="word-bar-container">
+          <div class="word-bar-fill" style="width: ${pct}%"></div>
+        </div>
+        <div class="word-bar-value">${d.freq} (${d.pct}%)</div>
+      `;
+    });
+}
+
+function renderPhrases(lines, seasonFilter) {
+  const phraseMap = new Map();
+  const firstSeen = new Map();
+
+  lines.forEach(line => {
+    if (seasonFilter !== "all" && line.season !== +seasonFilter) return;
+    
+    const text = line.line.toLowerCase();
+    
+    // Look for 2-4 word phrases
+    const words = text.split(/\s+/);
+    for (let len = 4; len >= 2; len--) {
+      for (let i = 0; i <= words.length - len; i++) {
+        const phrase = words.slice(i, i + len)
+          .map(w => w.replace(/[^\w']/g, ''))
+          .join(' ')
+          .trim();
+        
+        if (phrase.length > 5 && !phrase.split(' ').some(w => STOPWORDS.has(w))) {
+          phraseMap.set(phrase, (phraseMap.get(phrase) || 0) + 1);
+          if (!firstSeen.has(phrase)) {
+            firstSeen.set(phrase, `S${line.season}E${line.episode}`);
+          }
+        }
+      }
+    }
+  });
+
+  const phrases = Array.from(phraseMap.entries())
+    .filter(([phrase, count]) => count >= 2)
+    .map(([phrase, count]) => ({ phrase, count, first: firstSeen.get(phrase) }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 15);
+
+  d3.select("#phrases").selectAll(".phrase-item").remove();
+
+  if (phrases.length === 0) {
+    d3.select("#phrases").html('<div class="no-selection">No common phrases found</div>');
+    return;
+  }
+
+  d3.select("#phrases")
+    .selectAll(".phrase-item")
+    .data(phrases, d => d.phrase)
+    .join("div")
+    .attr("class", "phrase-item")
+    .html(d => `
+      <div class="phrase-text">"${d.phrase}"</div>
+      <div class="phrase-meta">Count: ${d.count} &mdash; First: ${d.first}</div>
+    `);
+}
+
+function renderSeasonalComparison(lines) {
+  const seasonalData = [];
+  
+  // Get top 8 words overall
+  const allWords = extractWordsForCharacter(lines, "all").slice(0, 8);
+  const topWords = allWords.map(d => d.word);
+
+  // Calculate frequency per season
+  for (let season = 1; season <= 9; season++) {
+    const seasonLines = lines.filter(d => d.season === season);
+    if (seasonLines.length === 0) continue;
+    
+    const seasonWords = extractWordsForCharacter(seasonLines, "all");
+    const row = { season: `S${season}` };
+    
+    topWords.forEach(word => {
+      const entry = seasonWords.find(d => d.word === word);
+      row[word] = entry ? entry.freq : 0;
+    });
+    seasonalData.push(row);
+  }
+
+  const margin = { top: 10, right: 10, bottom: 40, left: 50 };
+  const width = 520 - margin.left - margin.right;
+  const height = 280 - margin.top - margin.bottom;
+
+  d3.select("#seasonal-chart").selectAll("*").remove();
+
+  const svg = d3.select("#seasonal-chart").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom);
+
+  const g = svg.append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  const maxFreq = d3.max(seasonalData, row => d3.max(topWords.map(w => row[w])));
+
+  const x = d3.scaleBand()
+    .domain(seasonalData.map(d => d.season))
+    .range([0, width])
+    .padding(0.3);
+
+  const y = d3.scaleLinear()
+    .domain([0, maxFreq])
+    .range([height, 0]);
+
+  const subX = d3.scaleBand()
+    .domain(topWords)
+    .range([0, x.bandwidth()])
+    .padding(0.1);
+
+  const colors = d3.schemeSet3;
+  const colorScale = d3.scaleOrdinal()
+    .domain(topWords)
+    .range(colors);
+
+  // Draw grouped bars
+  g.selectAll(".season-group")
+    .data(seasonalData)
+    .join("g")
+    .attr("class", "season-group")
+    .attr("transform", d => `translate(${x(d.season)},0)`)
+    .selectAll(".bar")
+    .data(d => topWords.map(word => ({ word, freq: d[word], season: d.season })))
+    .join("rect")
+    .attr("class", "bar")
+    .attr("x", d => subX(d.word))
+    .attr("y", d => y(d.freq))
+    .attr("width", subX.bandwidth())
+    .attr("height", d => height - y(d.freq))
+    .attr("fill", d => colorScale(d.word))
+    .on("mousemove", (event, d) => {
+      showTooltip(event, `<b>${d.word}</b><br>${d.season}: ${d.freq} times`);
+    })
+    .on("mouseout", hideTooltip);
+
+  // X axis
+  g.append("g")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x))
+    .style("font-size", "11px");
+
+  // Y axis
+  g.append("g")
+    .call(d3.axisLeft(y).ticks(4))
+    .style("font-size", "11px");
+
+  // Legend
+  const legend = g.append("g")
+    .attr("transform", `translate(${width - 120}, -8)`);
+
+  topWords.forEach((word, i) => {
+    legend.append("rect")
+      .attr("x", 0)
+      .attr("y", i * 12)
+      .attr("width", 8)
+      .attr("height", 8)
+      .attr("fill", colorScale(word));
+
+    legend.append("text")
+      .attr("x", 12)
+      .attr("y", i * 12 + 7)
+      .attr("font-size", "9px")
+      .attr("fill", "#2e1f12")
+      .text(word.substring(0, 12));
+  });
 }

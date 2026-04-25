@@ -100,6 +100,83 @@
     </div>
   </section>
 
+  <section class="level-2">
+    <h2 class="section-title">What do characters say? <span class="level-badge">Level 2</span></h2>
+    
+    <div class="controls">
+      <div class="control-group">
+        <label for="char-select-l2">Select a character to analyze</label>
+        <select id="char-select-l2">
+          <option value="">— Choose a character —</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <span class="control-label">View mode</span>
+        <div class="metric-toggle" role="radiogroup" aria-label="View mode">
+          <label><input type="radio" name="l2-mode" value="all" checked /> Entire show</label>
+          <label><input type="radio" name="l2-mode" value="by-season" /> By season</label>
+        </div>
+      </div>
+      <div class="control-group control-actions">
+        <button id="reset-l2-btn" type="button">Clear selection</button>
+      </div>
+    </div>
+
+    <div class="viz-level2">
+      <div class="panel panel-wordcloud">
+        <h3>Word frequency cloud</h3>
+        <p class="caption">
+          Most frequently used words (stop words removed). Word size represents frequency.
+          Hover for exact counts.
+        </p>
+        <div id="wordcloud" class="chart"></div>
+      </div>
+
+      <div class="panel panel-topwords">
+        <h3>Top 20 words by frequency</h3>
+        <p class="caption">
+          Ranked list showing word counts and percentage of character's total dialogue.
+        </p>
+        <div id="top-words-list" class="chart"></div>
+      </div>
+    </div>
+
+    <div class="viz-level2">
+      <div class="panel panel-phrases">
+        <h3>Most common phrases</h3>
+        <p class="caption">
+          Frequently repeated multi-word phrases and catchphrases.
+          Shows count and first episode of appearance.
+        </p>
+        <div id="phrases" class="chart"></div>
+      </div>
+
+      <div class="panel panel-seasonal">
+        <h3>Word frequency by season</h3>
+        <p class="caption">
+          How the character's top words change across seasons.
+          Select a season to focus on word frequency patterns.
+        </p>
+        <div class="seasonal-controls">
+          <label for="season-select-l2">Filter by season:</label>
+          <select id="season-select-l2">
+            <option value="all">All seasons</option>
+            <option value="1">Season 1</option>
+            <option value="2">Season 2</option>
+            <option value="3">Season 3</option>
+            <option value="4">Season 4</option>
+            <option value="5">Season 5</option>
+            <option value="6">Season 6</option>
+            <option value="7">Season 7</option>
+            <option value="8">Season 8</option>
+            <option value="9">Season 9</option>
+          </select>
+        </div>
+        <div id="seasonal-chart" class="chart"></div>
+      </div>
+    </div>
+  </section>
+
   <section class="design-notes">
     <details>
       <summary><strong>Design notes &amp; justification</strong> (click to expand)</summary>
