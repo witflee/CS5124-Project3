@@ -40,6 +40,47 @@ Optional features included:
   italic title evoke the show's opening titles and Dunder Mifflin's
   drab office aesthetic.
 
+## Tasks supported (Level 2 — What do characters say?)
+Four interconnected text analysis views let you explore what individual
+characters tend to say, how their vocabulary changes across seasons, and
+identify their most distinctive phrases.
+
+1. **Word frequency cloud** — Top 50 most-used words (stop words removed)
+   displayed as a word cloud. Word size represents frequency. Hover for
+   exact counts and percentage of character's total dialogue.
+
+2. **Top 20 words ranked list** — Horizontal bar chart showing the 20
+   most frequent words, with exact counts and percentage of dialogue.
+   Useful for seeing the precise ranking and comparing frequencies.
+
+3. **Most common phrases** — Extracts 2–4 word phrases the character
+   repeats (e.g., "that's what she said", "bears, beets..."). Shows
+   count and the first episode where each phrase appears.
+
+4. **Word frequency by season** — Grouped bar chart comparing top 8 words
+   across all 9 seasons. Visualizes how a character's vocabulary evolves
+   (e.g., does Michael talk more about "paper" in early seasons?).
+
+**Controls:**
+- **Character selector** — Choose any of the top 25 characters to analyze.
+- **View mode** — "Entire show" or "By season" to zoom into a specific season.
+- **Season filter** (in phrase view) — Refocus the seasonal bar chart on
+  a single season if desired.
+
+**Design choices:**
+- **Stop word removal** — A curated list of 160+ common English words
+  (the, and, is, etc.) is filtered out so analyses focus on meaningful,
+  character-specific vocabulary.
+- **Word cloud + ranked list** — The cloud gives an at-a-glance visual
+  impression; the ranked list lets you verify precise counts and spot
+  small differences in frequency.
+- **Phrase extraction** — Detects repeated short phrases (catchphrases)
+  by looking for n-grams that appear multiple times. Useful for
+  character quirks (e.g., Dwight's "False" or Jim's impressions).
+- **Seasonal breakdown** — Grouped bars make it easy to compare whether
+  a character's focus changes over time (e.g., Erin's vocabulary before
+  and after she joins the show).
+
 ## Visualization & interaction choices
 
 ### Bar chart (left)
@@ -92,11 +133,37 @@ normalized.
 ## File layout
 ```
 index.html              # markup + show overview + controls + viz containers
-css/style.css           # Office-themed styling
-js/main.js              # data loading, cleaning, bar chart, heatmap
+                        # Level 1: bar chart, heatmap
+                        # Level 2: word cloud, top words, phrases, seasonal chart
+css/style.css           # Office-themed styling (Level 1 + Level 2 panels)
+js/main.js              # Level 1: data loading, cleaning, bar chart, heatmap
+                        # Level 2: word extraction, phrase detection, text viz
 js/d3.v6.min.js         # D3 v6
 data/The-Office-Lines-V4.csv  # source dialogue dataset
 ```
+
+## Implementation details (Level 2)
+
+**Text processing:**
+- `extractWordsForCharacter()` — Tokenizes character dialogue, removes
+  stop words, counts word frequencies, and returns sorted word-frequency
+  pairs. Supports filtering by season.
+- `renderWordCloud()` — Generates a visual word cloud from the top 50
+  words using size-based encoding. Interactive tooltips on hover.
+- `renderTopWordsList()` — Renders a horizontal bar chart with the top
+  20 words, showing counts and percentage of character's total dialogue.
+- `renderPhrases()` — Detects 2–4 word phrases that repeat at least twice,
+  sorts by frequency, and shows the first episode of appearance.
+- `renderSeasonalComparison()` — Creates a grouped bar chart comparing
+  the top 8 words across all 9 seasons, with interactive tooltips.
+
+**Stop words:**
+A comprehensive list of 160+ common English words (the, and, is, to, a,
+an, etc.) is filtered to focus analyses on meaningful vocabulary.
+
+**Character filtering:**
+Level 2 works on the same top 25 characters as Level 1, ensuring
+consistency across the dashboard.
 
 ## Hosting on GitHub Pages
 1. Push this repo to GitHub (any branch — e.g. `main`).
