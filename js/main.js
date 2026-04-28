@@ -78,6 +78,7 @@ const state = {
   l2Mode: "all",
   l2SelectedChar: null,
   l2Season: "all",
+  l3Season: "all",
 };
 
 d3.select("#bar-chart").append("div").attr("class", "loading").text("Loading data…");
@@ -214,6 +215,18 @@ function setupControls() {
     state.l2Season = this.value;
     renderLevel2();
   });
+
+  // Level 3 controls
+  d3.select("#season-select-l3").on("change", function () {
+    state.l3Season = this.value;
+    renderLevel3();
+  });
+
+  d3.select("#reset-l3-btn").on("click", () => {
+    state.l3Season = "all";
+    d3.select("#season-select-l3").property("value", "all");
+    renderLevel3();
+  });
 }
 
 function render() {
@@ -222,6 +235,7 @@ function render() {
   renderBarChart();
   renderHeatmap();
   renderLevel2();
+  renderLevel3();
 }
 
 function renderBarChart() {
@@ -806,4 +820,183 @@ function renderSeasonalComparison(lines, seasonFilter) {
       .attr("fill", "#2e1f12")
       .text(word.substring(0, 12));
   });
+}
+
+// ============ LEVEL 3: Who speaks to each other? ============
+
+function renderLevel3() {
+  const subtitle = state.l3Season === "all" ? "— all seasons" : `— Season ${state.l3Season}`;
+  d3.select("#chord-subtitle").text(subtitle);
+
+  const { matrix, names } = buildCooccurrenceMatrix(state.l3Season);
+  renderChordDiagram(matrix, names);
+  renderTopPairs(matrix, names);
+}
+
+function buildCooccurrenceMatrix(seasonFilter) {
+  const charNames = characters.map(c => c.name);
+  const nameIndex = new Map(charNames.map((n, i) => [n, i]));
+  const n = charNames.length;
+  const matrix = Array.from({ length: n }, () => new Array(n).fill(0));
+
+  const sceneMap = new Map();
+  allRows.forEach(d => {
+    if (seasonFilter !== "all" && d.season !== +seasonFilter) return;
+    if (!nameIndex.has(d.speaker)) return;
+    const key = `${d.season}-${d.episode}-${d.scene}`;
+    if (!sceneMap.has(key)) sceneMap.set(key, new Set());
+    sceneMap.get(key).add(d.speaker);
+  });
+
+  sceneMap.forEach(speakers => {
+    const arr = Array.from(speakers);
+    for (let i = 0; i < arr.length; i++) {
+      for (let j = i + 1; j < arr.length; j++) {
+        const a = nameIndex.get(arr[i]);
+        const b = nameIndex.get(arr[j]);
+        matrix[a][b] += 1;
+        matrix[b][a] += 1;
+      }
+    }
+  });
+
+  const active = [];
+  for (let i = 0; i < n; i++) {
+    if (matrix[i].reduce((sum, v) => sum + v, 0) > 0) active.push(i);
+  }
+
+  return {
+    matrix: active.map(i => active.map(j => matrix[i][j])),
+    names: active.map(i => charNames[i]),
+  };
+}
+
+function renderChordDiagram(matrix, names) {
+  d3.select("#chord-chart").selectAll("*").remove();
+
+  if (names.length === 0) {
+    d3.select("#chord-chart").html('<div class="no-selection">No co-occurrence data for this selection</div>');
+    return;
+  }
+
+  const size = 520;
+  const outerRadius = size / 2 - 50;
+  const innerRadius = outerRadius - 18;
+
+  const svg = d3.select("#chord-chart").append("svg")
+    .attr("width", size)
+    .attr("height", size);
+
+  const g = svg.append("g")
+    .attr("transform", `translate(${size / 2},${size / 2})`);
+
+  const chord = d3.chord()
+    .padAngle(0.04)
+    .sortSubgroups(d3.descending);
+
+  const chords = chord(matrix);
+
+  const arc = d3.arc()
+    .innerRadius(innerRadius)
+    .outerRadius(outerRadius);
+
+  const ribbon = d3.ribbon()
+    .radius(innerRadius);
+
+  const arcColor = d3.scaleOrdinal()
+    .domain(names)
+    .range(d3.quantize(d3.interpolateSinebow, names.length + 1));
+
+  g.selectAll(".chord-ribbon")
+    .data(chords)
+    .join("path")
+    .attr("class", "chord-ribbon")
+    .attr("d", ribbon)
+    .attr("fill", d => arcColor(names[d.source.index]))
+    .attr("opacity", 0.6)
+    .on("mousemove", (event, d) => {
+      showTooltip(event,
+        `<b>${names[d.source.index]} &amp; ${names[d.target.index]}</b><br>` +
+        `${d3.format(",")(d.source.value)} shared scenes`);
+    })
+    .on("mouseout", hideTooltip);
+
+  const arcGroups = g.selectAll(".chord-arc")
+    .data(chords.groups)
+    .join("g")
+    .attr("class", "chord-arc");
+
+  arcGroups.append("path")
+    .attr("d", arc)
+    .attr("fill", d => arcColor(names[d.index]))
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 0.5)
+    .on("mouseover", (event, d) => {
+      g.selectAll(".chord-ribbon")
+        .attr("opacity", r =>
+          (r.source.index === d.index || r.target.index === d.index) ? 0.85 : 0.06);
+    })
+    .on("mousemove", (event, d) => {
+      const total = matrix[d.index].reduce((sum, v) => sum + v, 0);
+      showTooltip(event,
+        `<b>${names[d.index]}</b><br>${d3.format(",")(total)} total shared scenes`);
+    })
+    .on("mouseout", () => {
+      g.selectAll(".chord-ribbon").attr("opacity", 0.6);
+      hideTooltip();
+    });
+
+  arcGroups.append("text")
+    .attr("dy", "0.35em")
+    .attr("transform", d => {
+      const angle = (d.startAngle + d.endAngle) / 2;
+      const rotate = angle * 180 / Math.PI - 90;
+      const flip = angle > Math.PI;
+      return `rotate(${rotate}) translate(${outerRadius + 8}) ${flip ? "rotate(180)" : ""}`;
+    })
+    .attr("text-anchor", d => {
+      const angle = (d.startAngle + d.endAngle) / 2;
+      return angle > Math.PI ? "end" : "start";
+    })
+    .attr("font-size", "11px")
+    .attr("fill", "#2e1f12")
+    .text(d => names[d.index]);
+}
+
+function renderTopPairs(matrix, names) {
+  const pairs = [];
+  for (let i = 0; i < names.length; i++) {
+    for (let j = i + 1; j < names.length; j++) {
+      if (matrix[i][j] > 0) {
+        pairs.push({ a: names[i], b: names[j], count: matrix[i][j] });
+      }
+    }
+  }
+  pairs.sort((a, b) => b.count - a.count);
+  const top10 = pairs.slice(0, 10);
+
+  d3.select("#top-pairs").html('');
+
+  if (top10.length === 0) {
+    d3.select("#top-pairs").html('<div class="no-selection">No pair data for this selection</div>');
+    return;
+  }
+
+  const maxCount = top10[0].count;
+
+  d3.select("#top-pairs")
+    .selectAll(".pair-item")
+    .data(top10)
+    .join("div")
+    .attr("class", "pair-item")
+    .html(d => {
+      const pct = (d.count / maxCount) * 100;
+      return `
+        <div class="pair-label">${d.a} & ${d.b}</div>
+        <div class="pair-bar-container">
+          <div class="pair-bar-fill" style="width: ${pct}%"></div>
+        </div>
+        <div class="pair-value">${d3.format(",")(d.count)} scenes</div>
+      `;
+    });
 }
