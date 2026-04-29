@@ -809,7 +809,7 @@ function renderSeasonalComparison(lines, seasonFilter) {
   }
 
   const margin = { top: 10, right: 5, bottom: 200, left: 60 };
-  const width = 750 - margin.left - margin.right;
+  const width = 650 - margin.left - margin.right;
   const height = 500 - margin.top - margin.bottom;
 
   d3.select("#seasonal-chart").selectAll("*").remove();
