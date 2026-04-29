@@ -24,7 +24,7 @@
     <div class="overview-text">
       <h2>About the show</h2>
       <p>
-        <em>The Office</em> (US) is a mockumentary sitcom, Created by <strong>Greg Daniels</strong>, that aired on
+        <em>The Office</em> (US) is a mockumentary sitcom that aired on
         <strong>NBC</strong> from <strong>March 24, 2005</strong> to
         <strong>May 16, 2013</strong>. Adapted from the British series of the same name,
         the show follows the day-to-day lives of the employees at the
@@ -104,32 +104,23 @@
     <h2 class="section-title">What do characters say? <span class="level-badge">Level 2</span></h2>
     
     <div class="controls">
-  <div class="control-group">
-    <label for="char-select-l2">Character</label>
-    <select id="char-select-l2">
-      <option value="">— Choose a character —</option>
-    </select>
-  </div>
-  <div class="control-group">
-    <label for="season-select-l2">Season</label>
-    <select id="season-select-l2">
-      <option value="all">All seasons</option>
-      <option value="1">Season 1</option>
-      <option value="2">Season 2</option>
-      <option value="3">Season 3</option>
-      <option value="4">Season 4</option>
-      <option value="5">Season 5</option>
-      <option value="6">Season 6</option>
-      <option value="7">Season 7</option>
-      <option value="8">Season 8</option>
-      <option value="9">Season 9</option>
-    </select>
-  </div>
-  <div class="control-group control-actions">
-    <label>&nbsp;</label>
-    <button id="reset-l2-btn" type="button">Clear selection</button>
-  </div>
-</div>
+      <div class="control-group">
+        <label for="char-select-l2">Select a character to analyze</label>
+        <select id="char-select-l2">
+          <option value="">— Choose a character —</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <span class="control-label">View mode</span>
+        <div class="metric-toggle" role="radiogroup" aria-label="View mode">
+          <label><input type="radio" name="l2-mode" value="all" checked /> Entire show</label>
+          <label><input type="radio" name="l2-mode" value="by-season" /> By season</label>
+        </div>
+      </div>
+      <div class="control-group control-actions">
+        <button id="reset-l2-btn" type="button">Clear selection</button>
+      </div>
+    </div>
 
     <div class="viz-level2">
       <div class="panel panel-wordcloud">
@@ -240,46 +231,6 @@
 
         <h4 class="sub-h"><span id="pair-title">Click a cell above to inspect a pair</span></h4>
         <div id="pair-words" class="chart"></div>
-  <section class="level-3">
-    <h2 class="section-title">Who shares the screen? <span class="level-badge">Level 3</span></h2>
-
-    <div class="controls">
-      <div class="control-group">
-        <label for="season-select-l3">Season filter</label>
-        <select id="season-select-l3">
-          <option value="all">All seasons</option>
-          <option value="1">Season 1</option>
-          <option value="2">Season 2</option>
-          <option value="3">Season 3</option>
-          <option value="4">Season 4</option>
-          <option value="5">Season 5</option>
-          <option value="6">Season 6</option>
-          <option value="7">Season 7</option>
-          <option value="8">Season 8</option>
-          <option value="9">Season 9</option>
-        </select>
-      </div>
-      <div class="control-group control-actions">
-        <button id="reset-l3-btn" type="button">Reset</button>
-      </div>
-    </div>
-
-    <div class="viz-level3">
-      <div class="panel panel-chord">
-        <h3>Character co-occurrence <span class="panel-sub" id="chord-subtitle">&mdash; all seasons</span></h3>
-        <p class="caption">
-          Chord thickness shows how often two characters share a scene.
-          Hover a character arc to isolate their connections; hover a chord for details.
-        </p>
-        <div id="chord-chart" class="chart"></div>
-      </div>
-
-      <div class="panel panel-pairs">
-        <h3>Strongest character pairs</h3>
-        <p class="caption">
-          Top 10 character pairs ranked by number of shared scenes.
-        </p>
-        <div id="top-pairs" class="chart"></div>
       </div>
     </div>
   </section>
@@ -293,7 +244,6 @@
           <li><strong>Show overview</strong> &mdash; the header and stats panel give the network, run dates, season/episode counts, genre, and a short prose intro to the central characters.</li>
           <li><strong>Importance overall &amp; per-season</strong> &mdash; the bar chart ranks characters by either lines, words, or episodes appeared. The season dropdown (and clicking a season label in the heatmap) re-computes the ranking for just that season, so a viewer can compare e.g. Andy in S8 vs. the show as a whole.</li>
           <li><strong>Per-episode appearances for major characters</strong> &mdash; the heatmap shows one row per major character and one column per episode, color-encoded by lines spoken in that episode. Empty (gray) cells = the character didn&rsquo;t speak that episode. Season dividers segment the timeline.</li>
-          <li><strong>Character co-occurrence</strong> &mdash; the chord diagram shows which characters share scenes most often. Each arc is a character, and each chord connecting two arcs is sized by how many scenes they both spoke in. The season dropdown re-builds the diagram for just that season, so you can see e.g. how Michael&rsquo;s scene partners shift from S1 to S7, or who fills the gap in S8&ndash;9. The top-10 pairs bar chart gives the exact counts.</li>
         </ol>
         <h4>Visual encoding choices</h4>
         <ul>
@@ -303,8 +253,6 @@
           <li><strong>Brushing &amp; linking</strong>: selecting a character in the bar chart highlights its row in the heatmap; choosing a season in the dropdown both re-ranks the bar chart and dims non-matching episodes in the heatmap. This keeps the two views consistent and supports answering "who matters in S6?" and "where in S6 did Andy actually show up?" together.</li>
           <li><strong>Tooltips</strong> for details-on-demand instead of cluttering the chart with labels.</li>
           <li><strong>Wikipedia link</strong> next to each bar (the small <span class="wiki-icon-inline">w</span>) for the optional "link out" requirement.</li>
-          <li><strong>Chord diagram</strong> for co-occurrence: character interactions form a weighted network (who shares scenes with whom), and a chord diagram is a natural fit, since arc length encodes how connected a character is overall, and chord thickness encodes the strength of a specific pairing. Hovering an arc dims all unrelated chords so you can isolate one character&rsquo;s connections without losing context.</li>
-          <li><strong>Top pairs bar chart</strong> alongside the chord diagram: chords are good for seeing the overall shape of the network but hard to rank precisely. For example, is the Michael to Jim chord thicker than Michael toDwight? The bar chart answers that a little more directly.</li>
         </ul>
         <h4>Who is included</h4>
         <p>
@@ -383,15 +331,6 @@
           <code>Jim       █ █ ░ █ █</code><br/>
           <code>Pam       █ █ █ ░ ▓</code><br/>
           <code>&hellip;          (click a cell &rarr; below: top words for that pair)</code>
-        <h4>Why option 2 (co-occurrence) for Level 3</h4>
-        <p>
-          Level 2 already covers what characters say, so Level 3 picks up option 2
-          &mdash; who speaks with whom. The Office is an ensemble show and character
-          pairings drive most of the comedy (Jim to Dwight, Michael to Toby,
-          Jim to Pam), so a co-occurrence view felt more revealing than duplicating
-          text analysis. The transcript data includes scene numbers per episode, which
-          gives a clean way to infer who appears together without guessing from
-          adjacent lines.
         </p>
       </div>
     </details>
