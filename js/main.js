@@ -195,10 +195,10 @@ d3.select("#season-select-l3").on("change", function () {
 
 d3.select("#reset-l2-btn").on("click", () => {
   state.l2SelectedChar = null;
-  state.l2Mode = "all";
+  state.l2Season = "all";
   d3.select("#char-select-l2").property("value", "");
-  d3.select("input[name='l2-mode'][value='all']").property("checked", true);
-  setSeasonAll("all");  // handles season + render
+  d3.select("#season-select-l2").property("value", "all");
+  renderLevel2();
 });
 
 d3.select("#reset-l3-btn").on("click", () => {
@@ -216,11 +216,6 @@ d3.select("#reset-l3-btn").on("click", () => {
 
   d3.select("#char-select-l2").on("change", function () {
     state.l2SelectedChar = this.value || null;
-    renderLevel2();
-  });
-
-  d3.selectAll("input[name='l2-mode']").on("change", function () {
-    state.l2Mode = this.value;
     renderLevel2();
   });
   
@@ -466,9 +461,7 @@ function renderHeatmap() {
       .attr("text-anchor", "middle")
       .text("S" + s.season)
       .on("click", () => {
-        state.season = state.season == s.season ? "all" : String(s.season);
-        d3.select("#season-select").property("value", state.season);
-        render();
+        setSeasonAll(state.season == s.season ? "all" : String(s.season));
       });
   });
 
@@ -570,12 +563,10 @@ function renderLevel2() {
     d3.select("#top-words-list").html('<div class="no-selection">Select a character to see word frequency</div>');
     d3.select("#phrases").html('<div class="no-selection">Select a character to see common phrases</div>');
     d3.select("#seasonal-chart").html('<div class="no-selection">Select a character to see seasonal patterns</div>');
-    d3.select("#season-select-l2").property("disabled", true);
     return;
   }
 
-  const filterSeason = state.l2Mode === "by-season" ? state.l2Season : "all";
-  d3.select("#season-select-l2").property("disabled", state.l2Mode !== "by-season");
+  const filterSeason = state.l2Season;
 
   const charLines = allRows.filter(d => d.speaker === state.l2SelectedChar);
   const wordData = extractWordsForCharacter(charLines, filterSeason);
@@ -729,7 +720,7 @@ function renderSeasonalComparison(lines, seasonFilter) {
   const topWords = allWords.map(d => d.word);
 
   for (let season = 1; season <= 9; season++) {
-    if (state.l2Mode === 'by-season' && state.l2Season !== 'all' && season !== +state.l2Season) continue;
+    if (state.season !== 'all' && season !== +state.season) continue;
     const seasonLines = lines.filter(d => d.season === season);
     if (seasonLines.length === 0) continue;
     
