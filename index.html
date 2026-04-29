@@ -186,60 +186,6 @@
     </div>
   </section>
 
-  <section class="level-4">
-    <h2 class="section-title">Inside The Office <span class="level-badge">Level 4</span></h2>
-    <p class="section-intro">
-      Two views that look at <em>what is said</em> across the whole show and <em>who is said it with</em>:
-      a phrase tracker (when a catchphrase first appears, how it spreads, and who repeats it most),
-      and a 25&times;25 co-scene matrix (which character pairs actually share scenes &mdash; click a cell
-      to see what they talk about when they're both there).
-    </p>
-
-    <div class="viz-level4">
-      <div class="panel panel-phrase-tracker">
-        <h3>Phrase tracker <span class="panel-sub">&mdash; when does a line catch on?</span></h3>
-        <p class="caption">
-          Search any word or phrase, or pick a famous Office catchphrase. See its first &amp;
-          last appearance, frequency over the run of the show, and who said it most.
-        </p>
-
-        <div class="phrase-controls">
-          <input id="phrase-input" type="text" placeholder='e.g. "that&apos;s what she said", "false", "parkour"' />
-          <button id="phrase-go" type="button">Search</button>
-        </div>
-        <div class="phrase-presets">
-          <span class="preset-label">Quick picks:</span>
-          <button class="preset-btn" data-q="that's what she said">"that's what she said"</button>
-          <button class="preset-btn" data-q="false">"false"</button>
-          <button class="preset-btn" data-q="bears">"bears"</button>
-          <button class="preset-btn" data-q="identity theft">"identity theft"</button>
-          <button class="preset-btn" data-q="parkour">"parkour"</button>
-          <button class="preset-btn" data-q="bankruptcy">"bankruptcy"</button>
-          <button class="preset-btn" data-q="schrute">"schrute"</button>
-          <button class="preset-btn" data-q="pretzel">"pretzel"</button>
-        </div>
-
-        <div id="phrase-stats" class="phrase-stats"></div>
-
-        <h4 class="sub-h">Frequency over time (one dot = one episode)</h4>
-        <div id="phrase-timeline" class="chart"></div>
-
-        <h4 class="sub-h">Top speakers of this phrase</h4>
-        <div id="phrase-speakers" class="chart"></div>
-      </div>
-
-      <div class="panel panel-coscene">
-        <h3>Character co-scene matrix <span class="panel-sub">&mdash; who shares a scene with whom?</span></h3>
-        <p class="caption">
-          Each cell is a pair of characters; color shows the number of distinct scenes they both
-          appear in across all 186 episodes. Click any cell to see the words those two characters
-          use most when they&rsquo;re in the same scene.
-        </p>
-
-        <div id="coscene-matrix" class="chart"></div>
-
-        <h4 class="sub-h"><span id="pair-title">Click a cell above to inspect a pair</span></h4>
-        <div id="pair-words" class="chart"></div>
   <section class="level-3">
     <h2 class="section-title">Who shares the screen? <span class="level-badge">Level 3</span></h2>
 
@@ -324,65 +270,6 @@
           The cream/mustard/dark-brown palette and Bebas Neue title evoke the
           show&rsquo;s opening titles and Dunder Mifflin&rsquo;s drab office aesthetic.
         </p>
-
-        <h4>Level 4 &mdash; Inside The Office</h4>
-        <p>
-          Two new views were added that exploit two pieces of the dataset Levels 1&amp;2
-          ignored: the raw <code>line</code> text (for free-text search) and the per-episode
-          <code>scene</code> column (for co-presence analysis).
-        </p>
-
-        <p><strong>Phrase tracker.</strong> The Office is a show built on running gags
-        ("That&rsquo;s what she said", "False", "Bears, beets&hellip;", "Identity theft is not
-        a joke, Jim"). The user wants to know:
-        <em>when did this gag start? when did it die? and which characters carry it?</em>
-        The view answers all three:</p>
-        <ul>
-          <li><strong>Stat strip</strong> &mdash; total uses, # episodes that contain it,
-          first appearance (S?E?), last appearance, and the peak season &mdash; details on
-          demand without reading the chart.</li>
-          <li><strong>Timeline dot/area chart</strong> &mdash; one mark per episode along the
-          chronological X axis (with season dividers carried over from the heatmap so users
-          can map between views). Empty episodes are visible as gaps, which is the whole point
-          when you&rsquo;re asking "when does it disappear?".</li>
-          <li><strong>Top-speakers bar</strong> &mdash; bars are the right channel for
-          "who said it most" because the question is a strict ranking.</li>
-          <li><strong>Quick-pick buttons</strong> for famous catchphrases avoid making the
-          user remember exact spellings; a free-text search box covers everything else.</li>
-        </ul>
-        <p class="sketch">Sketch:
-          <code>[ search box ] [Go]</code><br/>
-          <code>[ catchphrase chips&hellip; ]</code><br/>
-          <code>[ stat: 142 uses · S2E2 first · S9E20 last · in 76 eps ]</code><br/>
-          <code>timeline:  &middot;  &middot;&middot; &middot;&middot;&middot;&middot;&middot;  &middot;  &middot;  &middot;&middot;  &middot; &middot;</code><br/>
-          <code>speakers:  Michael ████████  Dwight ███  Andy ██  &hellip;</code>
-        </p>
-
-        <p><strong>Character co-scene matrix.</strong> "Who actually talks to whom?" is the
-        natural follow-up to Level 1&rsquo;s "who&rsquo;s important?". Two characters can both
-        appear in many episodes without ever sharing a scene (e.g. corporate visitors vs the
-        warehouse), and the show has clear sub-cliques (the salespeople, the accountants, the
-        warehouse). A 25&times;25 matrix is the right encoding because:</p>
-        <ul>
-          <li>It shows <strong>all</strong> pairs at once &mdash; cliques pop out as bright
-          rectangular blocks, isolates as dim rows.</li>
-          <li>The diagonal (a character paired with themselves) is set to "all scenes the
-          character is in" so the row/column can be read as marginal totals as well.</li>
-          <li>Both axes are sorted by total importance (same order as the Level 1 bar chart),
-          so the eye finds Michael at the top-left automatically.</li>
-          <li><strong>Click any cell</strong> to drill in: a small bar list shows the most
-          common (non-stopword) words that <em>either</em> character speaks <em>only when both
-          are in the scene together</em>. This is how the user answers "do Jim and Pam say
-          different things to each other than Jim and Michael do?" &mdash; they click two cells
-          and compare.</li>
-        </ul>
-        <p class="sketch">Sketch:
-          <code>          M D J P A&hellip;</code><br/>
-          <code>Michael   ░ █ █ █ █  ← row reads as "everyone Michael shares scenes with"</code><br/>
-          <code>Dwight    █ ░ █ █ █</code><br/>
-          <code>Jim       █ █ ░ █ █</code><br/>
-          <code>Pam       █ █ █ ░ ▓</code><br/>
-          <code>&hellip;          (click a cell &rarr; below: top words for that pair)</code>
         <h4>Why option 2 (co-occurrence) for Level 3</h4>
         <p>
           Level 2 already covers what characters say, so Level 3 picks up option 2
