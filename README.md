@@ -13,7 +13,7 @@ https://<your-github-username>.github.io/CS5124-Project3/
 ```
 Alternatively, this project has also been deployed and hosted via Vercel, and can be accessed here:
 ```
-https://cs-5124-project3-i5aijqrs8-witflees-projects.vercel.app/
+https://cs-5124-project3-jade.vercel.app/
 ```
 
 ## Run locally
