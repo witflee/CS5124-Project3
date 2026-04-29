@@ -104,8 +104,8 @@ a:hover { color: var(--dark-brown); }
 
 .controls {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-wrap: nowrap;        
+  align-items: flex-end;   
   gap: 28px;
   padding: 14px 40px;
   background: var(--cream);
