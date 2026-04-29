@@ -78,7 +78,6 @@ const state = {
   l2Mode: "all",
   l2SelectedChar: null,
   l2Season: "all",
-  l3Season: "all",
 };
 
 d3.select("#bar-chart").append("div").attr("class", "loading").text("Loading data…");
@@ -200,6 +199,7 @@ d3.select("#reset-l2-btn").on("click", () => {
   state.l2SelectedChar = null;
   d3.select("#char-select-l2").property("value", "");
   setSeasonAll("all");
+
 });
 
 d3.select("#reset-l3-btn").on("click", () => {
@@ -209,22 +209,26 @@ d3.select("#reset-l3-btn").on("click", () => {
   // Level 2 controls
   const charOptions = characters.map(c => c.name);
   d3.select("#char-select-l2")
-    .selectAll("option")
+    .selectAll("option.character-option")
     .data(charOptions, d => d)
     .join("option")
+    .attr("class", "character-option")
     .attr("value", d => d)
     .text(d => d);
 
-  d3.select("#char-select-l2").on("change", function () {
-    state.l2SelectedChar = this.value || null;
-    renderLevel2();
-  });
-  
+  d3.select("#char-select-l2")
+    .property("value", "")
+    .on("change", function () {
+      state.l2SelectedChar = this.value || null;
+      state.selectedChar = state.l2SelectedChar;
+      render();
+    });
 }
 
 function render() {
   const subtitle = state.season === "all" ? "— all seasons" : `— Season ${state.season}`;
   d3.select("#bar-subtitle").text(subtitle);
+  d3.select("#season-select-l3").property("value", state.season);
   renderBarChart();
   renderHeatmap();
   renderLevel2();
@@ -560,17 +564,19 @@ function hideTooltip() {
 // ============ LEVEL 2: What do characters say? ============
 
 function renderLevel2() {
-  if (!state.l2SelectedChar) {
+  const char = state.l2SelectedChar || state.selectedChar;
+  if (!char) {
     d3.select("#wordcloud").html('<div class="no-selection">Select a character to analyze what they say</div>');
     d3.select("#top-words-list").html('<div class="no-selection">Select a character to see word frequency</div>');
     d3.select("#phrases").html('<div class="no-selection">Select a character to see common phrases</div>');
     d3.select("#seasonal-chart").html('<div class="no-selection">Select a character to see seasonal patterns</div>');
     return;
   }
+  d3.select("#char-select-l2").property("value", char);
 
   const filterSeason = state.l2Season;
 
-  const charLines = allRows.filter(d => d.speaker === state.l2SelectedChar);
+  const charLines = allRows.filter(d => d.speaker === char);
   const wordData = extractWordsForCharacter(charLines, filterSeason);
   
   renderWordCloud(wordData, filterSeason);
@@ -826,10 +832,10 @@ function renderSeasonalComparison(lines, seasonFilter) {
 // ============ LEVEL 3: Who speaks to each other? ============
 
 function renderLevel3() {
-  const subtitle = state.l3Season === "all" ? "— all seasons" : `— Season ${state.l3Season}`;
+  const subtitle = state.season === "all" ? "— all seasons" : `— Season ${state.season}`;
   d3.select("#chord-subtitle").text(subtitle);
 
-  const { matrix, names } = buildCooccurrenceMatrix(state.l3Season);
+  const { matrix, names } = buildCooccurrenceMatrix(state.season);
   renderChordDiagram(matrix, names);
   renderTopPairs(matrix, names);
 }
@@ -908,13 +914,20 @@ function renderChordDiagram(matrix, names) {
     .domain(names)
     .range(d3.quantize(d3.interpolateSinebow, names.length + 1));
 
+  const selectedIdx = state.selectedChar ? names.indexOf(state.selectedChar) : -1;
+
+  function ribbonOpacity(d) {
+    if (selectedIdx < 0) return 0.6;
+    return (d.source.index === selectedIdx || d.target.index === selectedIdx) ? 0.85 : 0.06;
+  }
+
   g.selectAll(".chord-ribbon")
     .data(chords)
     .join("path")
     .attr("class", "chord-ribbon")
     .attr("d", ribbon)
     .attr("fill", d => arcColor(names[d.source.index]))
-    .attr("opacity", 0.6)
+    .attr("opacity", ribbonOpacity)
     .on("mousemove", (event, d) => {
       showTooltip(event,
         `<b>${names[d.source.index]} &amp; ${names[d.target.index]}</b><br>` +
@@ -930,8 +943,9 @@ function renderChordDiagram(matrix, names) {
   arcGroups.append("path")
     .attr("d", arc)
     .attr("fill", d => arcColor(names[d.index]))
-    .attr("stroke", "#fff")
-    .attr("stroke-width", 0.5)
+    .attr("stroke", d => selectedIdx === d.index ? "#2e1f12" : "#fff")
+    .attr("stroke-width", d => selectedIdx === d.index ? 2 : 0.5)
+    .style("cursor", "pointer")
     .on("mouseover", (event, d) => {
       g.selectAll(".chord-ribbon")
         .attr("opacity", r =>
@@ -943,8 +957,12 @@ function renderChordDiagram(matrix, names) {
         `<b>${names[d.index]}</b><br>${d3.format(",")(total)} total shared scenes`);
     })
     .on("mouseout", () => {
-      g.selectAll(".chord-ribbon").attr("opacity", 0.6);
+      g.selectAll(".chord-ribbon").attr("opacity", ribbonOpacity);
       hideTooltip();
+    })
+    .on("click", (event, d) => {
+      state.selectedChar = state.selectedChar === names[d.index] ? null : names[d.index];
+      render();
     });
 
   arcGroups.append("text")
@@ -961,7 +979,12 @@ function renderChordDiagram(matrix, names) {
     })
     .attr("font-size", "11px")
     .attr("fill", "#2e1f12")
-    .text(d => names[d.index]);
+    .style("cursor", "pointer")
+    .text(d => names[d.index])
+    .on("click", (event, d) => {
+      state.selectedChar = state.selectedChar === names[d.index] ? null : names[d.index];
+      render();
+    });
 }
 
 function renderTopPairs(matrix, names) {
