@@ -218,6 +218,9 @@ function setupControls() {
 d3.select("#season-select-l2").on("change", function () {
   setSeasonAll(this.value);
 });
+d3.select("#season-select-seasonal").on("change", function () {
+  setSeasonAll(this.value);
+})
 
 d3.select("#season-select-shared").on("change", function () {
   setSeasonAll(this.value);
@@ -236,11 +239,9 @@ d3.select("#season-select-l3").on("change", function () {
 
 d3.select("#reset-l2-btn").on("click", () => {
   state.l2SelectedChar = null;
-  state.selectedChar = null;
-  state.l2Season = "all";
   d3.select("#char-select-l2").property("value", "");
-  d3.select("#season-select-l2").property("value", "all");
-  render();
+  setSeasonAll("all");
+
 });
 
 d3.select("#reset-l3-btn").on("click", () => {
@@ -606,6 +607,7 @@ function setSeasonAll(value) {
   d3.select("#season-select").property("value", value);
   d3.select("#season-select-l2").property("value", value);
   d3.select("#season-select-shared").property("value", value);
+  d3.select("#season-select-seasonal").property("value", value);
   d3.select("#season-select-l3").property("value", value);
   render();
 }
@@ -810,7 +812,7 @@ function renderSeasonalComparison(lines, seasonFilter) {
   const topWords = allWords.map(d => d.word);
 
   for (let season = 1; season <= 9; season++) {
-    if (state.season !== 'all' && season !== +state.season) continue;
+    if (seasonFilter !== 'all' && season !== +seasonFilter) continue;
     const seasonLines = lines.filter(d => d.season === season);
     if (seasonLines.length === 0) continue;
     
