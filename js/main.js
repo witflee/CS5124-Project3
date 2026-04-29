@@ -277,13 +277,11 @@ d3.select("#reset-l3-btn").on("click", () => {
     d3.select("#phrase-input").property("value", q);
     runPhraseSearch();
   });
-  d3.select("#char-select-l2")
-    .property("value", "")
-    .on("change", function () {
-      state.l2SelectedChar = this.value || null;
-      state.selectedChar = state.l2SelectedChar;
-      render();
-    });
+  d3.select("#char-select-l2").on("change", function () {
+  state.l2SelectedChar = this.value || null;
+  state.selectedChar = state.l2SelectedChar;
+  render();
+});
 }
 
 function render() {
@@ -633,7 +631,6 @@ function renderLevel2() {
     d3.select("#seasonal-chart").html('<div class="no-selection">Select a character to see seasonal patterns</div>');
     return;
   }
-  d3.select("#char-select-l2").property("value", char);
 
   const filterSeason = state.l2Season;
 
@@ -764,7 +761,7 @@ function renderPhrases(lines, seasonFilter) {
     .sort((a, b) => b.count - a.count)
     .slice(0, 15);
 
-  d3.select("#phrases").selectAll(".phrase-item").remove();
+  d3.select("#phrases").html('');
 
   if (phrases.length === 0) {
     d3.select("#phrases").html('<div class="no-selection">No common phrases found</div>');
