@@ -601,9 +601,8 @@ function computeStats(seasonFilter) {
   }));
 }
 function setSeasonAll(value) {
-  state.season    = value;
-  state.l2Season  = value;
-  state.l3Season  = value;
+  state.season   = value;
+  state.l2Season = value;
   d3.select("#season-select").property("value", value);
   d3.select("#season-select-l2").property("value", value);
   d3.select("#season-select-shared").property("value", value);
@@ -1254,7 +1253,7 @@ function escapeHtml(s) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 // ============ LEVEL 3: Who speaks to each other? ============
-
+}
 function renderLevel3() {
   const subtitle = state.season === "all" ? "— all seasons" : `— Season ${state.season}`;
   d3.select("#chord-subtitle").text(subtitle);
@@ -1447,5 +1446,4 @@ function renderTopPairs(matrix, names) {
         <div class="pair-value">${d3.format(",")(d.count)} scenes</div>
       `;
     });
-}
 }
