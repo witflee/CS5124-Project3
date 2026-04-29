@@ -208,16 +208,19 @@ d3.select("#reset-l3-btn").on("click", () => {
   // Level 2 controls
   const charOptions = characters.map(c => c.name);
   d3.select("#char-select-l2")
-    .selectAll("option")
+    .selectAll("option.character-option")
     .data(charOptions, d => d)
     .join("option")
+    .attr("class", "character-option")
     .attr("value", d => d)
     .text(d => d);
 
-  d3.select("#char-select-l2").on("change", function () {
-    state.l2SelectedChar = this.value || null;
-    renderLevel2();
-  });
+  d3.select("#char-select-l2")
+    .property("value", "")
+    .on("change", function () {
+      state.l2SelectedChar = this.value || null;
+      renderLevel2();
+    });
   
 }
 
