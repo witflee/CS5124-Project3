@@ -11,6 +11,10 @@ served from:
 ```
 https://<your-github-username>.github.io/CS5124-Project3/
 ```
+Alternatively, this project has also been deployed and hosted via Vercel, and can be accessed here:
+```
+https://cs-5124-project3-jade.vercel.app/
+```
 
 ## Run locally
 The page loads `data/The-Office-Lines-V4.csv` via `d3.csv`, so it must be

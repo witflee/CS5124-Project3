@@ -206,29 +206,54 @@ d3.csv("data/The-Office-Lines-V4.csv").then(raw => {
 });
 
 function setupControls() {
-  d3.select("#season-select").on("change", function () {
-    state.season = this.value;
-    render();
-  });
   d3.selectAll("input[name='metric']").on("change", function () {
     state.metric = this.value;
     render();
   });
+
+  d3.select("#season-select").on("change", function () {
+  setSeasonAll(this.value);
+});
+
+d3.select("#season-select-l2").on("change", function () {
+  setSeasonAll(this.value);
+});
+
+d3.select("#season-select-shared").on("change", function () {
+  setSeasonAll(this.value);
+});
+
+d3.select("#season-select-l3").on("change", function () {
+  setSeasonAll(this.value);
+});
+
   d3.select("#reset-btn").on("click", () => {
-    state.season = "all";
-    state.metric = "lines";
-    state.selectedChar = null;
-    d3.select("#season-select").property("value", "all");
-    d3.select("input[name='metric'][value='lines']").property("checked", true);
-    render();
-  });
+  state.metric = "lines";
+  state.selectedChar = null;
+  d3.select("input[name='metric'][value='lines']").property("checked", true);
+  setSeasonAll("all");  // handles season + render
+});
+
+d3.select("#reset-l2-btn").on("click", () => {
+  state.l2SelectedChar = null;
+  state.selectedChar = null;
+  state.l2Season = "all";
+  d3.select("#char-select-l2").property("value", "");
+  d3.select("#season-select-l2").property("value", "all");
+  render();
+});
+
+d3.select("#reset-l3-btn").on("click", () => {
+  setSeasonAll("all");  // handles season + render
+});
 
   // Level 2 controls
   const charOptions = characters.map(c => c.name);
   d3.select("#char-select-l2")
-    .selectAll("option")
+    .selectAll("option.character-option")
     .data(charOptions, d => d)
     .join("option")
+    .attr("class", "character-option")
     .attr("value", d => d)
     .text(d => d);
 
@@ -273,15 +298,24 @@ function setupControls() {
     d3.select("#phrase-input").property("value", q);
     runPhraseSearch();
   });
+  d3.select("#char-select-l2")
+    .property("value", "")
+    .on("change", function () {
+      state.l2SelectedChar = this.value || null;
+      state.selectedChar = state.l2SelectedChar;
+      render();
+    });
 }
 
 function render() {
   const subtitle = state.season === "all" ? "— all seasons" : `— Season ${state.season}`;
   d3.select("#bar-subtitle").text(subtitle);
+  d3.select("#season-select-l3").property("value", state.season);
   renderBarChart();
   renderHeatmap();
   renderLevel2();
   renderLevel4();
+  renderLevel3();
 }
 
 function renderBarChart() {
@@ -515,9 +549,7 @@ function renderHeatmap() {
       .attr("text-anchor", "middle")
       .text("S" + s.season)
       .on("click", () => {
-        state.season = state.season == s.season ? "all" : String(s.season);
-        d3.select("#season-select").property("value", state.season);
-        render();
+        setSeasonAll(state.season == s.season ? "all" : String(s.season));
       });
   });
 
@@ -567,6 +599,16 @@ function computeStats(seasonFilter) {
     episodeCount: c.episodes.size,
   }));
 }
+function setSeasonAll(value) {
+  state.season    = value;
+  state.l2Season  = value;
+  state.l3Season  = value;
+  d3.select("#season-select").property("value", value);
+  d3.select("#season-select-l2").property("value", value);
+  d3.select("#season-select-shared").property("value", value);
+  d3.select("#season-select-l3").property("value", value);
+  render();
+}
 
 function computeSeasonRanges(epX, cellW) {
   const ranges = [];
@@ -604,19 +646,19 @@ function hideTooltip() {
 // ============ LEVEL 2: What do characters say? ============
 
 function renderLevel2() {
-  if (!state.l2SelectedChar) {
+  const char = state.l2SelectedChar || state.selectedChar;
+  if (!char) {
     d3.select("#wordcloud").html('<div class="no-selection">Select a character to analyze what they say</div>');
     d3.select("#top-words-list").html('<div class="no-selection">Select a character to see word frequency</div>');
     d3.select("#phrases").html('<div class="no-selection">Select a character to see common phrases</div>');
     d3.select("#seasonal-chart").html('<div class="no-selection">Select a character to see seasonal patterns</div>');
-    d3.select("#season-select-l2").property("disabled", true);
     return;
   }
+  d3.select("#char-select-l2").property("value", char);
 
-  const filterSeason = state.l2Mode === "by-season" ? state.l2Season : "all";
-  d3.select("#season-select-l2").property("disabled", state.l2Mode !== "by-season");
+  const filterSeason = state.l2Season;
 
-  const charLines = allRows.filter(d => d.speaker === state.l2SelectedChar);
+  const charLines = allRows.filter(d => d.speaker === char);
   const wordData = extractWordsForCharacter(charLines, filterSeason);
   
   renderWordCloud(wordData, filterSeason);
@@ -768,6 +810,7 @@ function renderSeasonalComparison(lines, seasonFilter) {
   const topWords = allWords.map(d => d.word);
 
   for (let season = 1; season <= 9; season++) {
+    if (state.season !== 'all' && season !== +state.season) continue;
     const seasonLines = lines.filter(d => d.season === season);
     if (seasonLines.length === 0) continue;
     
@@ -786,9 +829,9 @@ function renderSeasonalComparison(lines, seasonFilter) {
     return;
   }
 
-  const margin = { top: 10, right: 10, bottom: 40, left: 50 };
+  const margin = { top: 10, right: 5, bottom: 200, left: 50 };
   const width = 520 - margin.left - margin.right;
-  const height = 280 - margin.top - margin.bottom;
+  const height = 500 - margin.top - margin.bottom;
 
   d3.select("#seasonal-chart").selectAll("*").remove();
 
@@ -849,7 +892,7 @@ function renderSeasonalComparison(lines, seasonFilter) {
     .style("font-size", "11px");
 
   const legend = g.append("g")
-    .attr("transform", `translate(${width - 120}, -8)`);
+    .attr('transform', `translate(0, ${height + 50})`);
 
   topWords.forEach((word, i) => {
     legend.append("rect")
@@ -1208,4 +1251,198 @@ function escapeHtml(s) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+// ============ LEVEL 3: Who speaks to each other? ============
+
+function renderLevel3() {
+  const subtitle = state.season === "all" ? "— all seasons" : `— Season ${state.season}`;
+  d3.select("#chord-subtitle").text(subtitle);
+
+  const { matrix, names } = buildCooccurrenceMatrix(state.season);
+  renderChordDiagram(matrix, names);
+  renderTopPairs(matrix, names);
+}
+
+function buildCooccurrenceMatrix(seasonFilter) {
+  const charNames = characters.map(c => c.name);
+  const nameIndex = new Map(charNames.map((n, i) => [n, i]));
+  const n = charNames.length;
+  const matrix = Array.from({ length: n }, () => new Array(n).fill(0));
+
+  const sceneMap = new Map();
+  allRows.forEach(d => {
+    if (seasonFilter !== "all" && d.season !== +seasonFilter) return;
+    if (!nameIndex.has(d.speaker)) return;
+    const key = `${d.season}-${d.episode}-${d.scene}`;
+    if (!sceneMap.has(key)) sceneMap.set(key, new Set());
+    sceneMap.get(key).add(d.speaker);
+  });
+
+  sceneMap.forEach(speakers => {
+    const arr = Array.from(speakers);
+    for (let i = 0; i < arr.length; i++) {
+      for (let j = i + 1; j < arr.length; j++) {
+        const a = nameIndex.get(arr[i]);
+        const b = nameIndex.get(arr[j]);
+        matrix[a][b] += 1;
+        matrix[b][a] += 1;
+      }
+    }
+  });
+
+  const active = [];
+  for (let i = 0; i < n; i++) {
+    if (matrix[i].reduce((sum, v) => sum + v, 0) > 0) active.push(i);
+  }
+
+  return {
+    matrix: active.map(i => active.map(j => matrix[i][j])),
+    names: active.map(i => charNames[i]),
+  };
+}
+
+function renderChordDiagram(matrix, names) {
+  d3.select("#chord-chart").selectAll("*").remove();
+
+  if (names.length === 0) {
+    d3.select("#chord-chart").html('<div class="no-selection">No co-occurrence data for this selection</div>');
+    return;
+  }
+
+  const size = 520;
+  const outerRadius = size / 2 - 50;
+  const innerRadius = outerRadius - 18;
+
+  const svg = d3.select("#chord-chart").append("svg")
+    .attr("width", size)
+    .attr("height", size);
+
+  const g = svg.append("g")
+    .attr("transform", `translate(${size / 2},${size / 2})`);
+
+  const chord = d3.chord()
+    .padAngle(0.04)
+    .sortSubgroups(d3.descending);
+
+  const chords = chord(matrix);
+
+  const arc = d3.arc()
+    .innerRadius(innerRadius)
+    .outerRadius(outerRadius);
+
+  const ribbon = d3.ribbon()
+    .radius(innerRadius);
+
+  const arcColor = d3.scaleOrdinal()
+    .domain(names)
+    .range(d3.quantize(d3.interpolateSinebow, names.length + 1));
+
+  const selectedIdx = state.selectedChar ? names.indexOf(state.selectedChar) : -1;
+
+  function ribbonOpacity(d) {
+    if (selectedIdx < 0) return 0.6;
+    return (d.source.index === selectedIdx || d.target.index === selectedIdx) ? 0.85 : 0.06;
+  }
+
+  g.selectAll(".chord-ribbon")
+    .data(chords)
+    .join("path")
+    .attr("class", "chord-ribbon")
+    .attr("d", ribbon)
+    .attr("fill", d => arcColor(names[d.source.index]))
+    .attr("opacity", ribbonOpacity)
+    .on("mousemove", (event, d) => {
+      showTooltip(event,
+        `<b>${names[d.source.index]} &amp; ${names[d.target.index]}</b><br>` +
+        `${d3.format(",")(d.source.value)} shared scenes`);
+    })
+    .on("mouseout", hideTooltip);
+
+  const arcGroups = g.selectAll(".chord-arc")
+    .data(chords.groups)
+    .join("g")
+    .attr("class", "chord-arc");
+
+  arcGroups.append("path")
+    .attr("d", arc)
+    .attr("fill", d => arcColor(names[d.index]))
+    .attr("stroke", d => selectedIdx === d.index ? "#2e1f12" : "#fff")
+    .attr("stroke-width", d => selectedIdx === d.index ? 2 : 0.5)
+    .style("cursor", "pointer")
+    .on("mouseover", (event, d) => {
+      g.selectAll(".chord-ribbon")
+        .attr("opacity", r =>
+          (r.source.index === d.index || r.target.index === d.index) ? 0.85 : 0.06);
+    })
+    .on("mousemove", (event, d) => {
+      const total = matrix[d.index].reduce((sum, v) => sum + v, 0);
+      showTooltip(event,
+        `<b>${names[d.index]}</b><br>${d3.format(",")(total)} total shared scenes`);
+    })
+    .on("mouseout", () => {
+      g.selectAll(".chord-ribbon").attr("opacity", ribbonOpacity);
+      hideTooltip();
+    })
+    .on("click", (event, d) => {
+      state.selectedChar = state.selectedChar === names[d.index] ? null : names[d.index];
+      render();
+    });
+
+  arcGroups.append("text")
+    .attr("dy", "0.35em")
+    .attr("transform", d => {
+      const angle = (d.startAngle + d.endAngle) / 2;
+      const rotate = angle * 180 / Math.PI - 90;
+      const flip = angle > Math.PI;
+      return `rotate(${rotate}) translate(${outerRadius + 8}) ${flip ? "rotate(180)" : ""}`;
+    })
+    .attr("text-anchor", d => {
+      const angle = (d.startAngle + d.endAngle) / 2;
+      return angle > Math.PI ? "end" : "start";
+    })
+    .attr("font-size", "11px")
+    .attr("fill", "#2e1f12")
+    .style("cursor", "pointer")
+    .text(d => names[d.index])
+    .on("click", (event, d) => {
+      state.selectedChar = state.selectedChar === names[d.index] ? null : names[d.index];
+      render();
+    });
+}
+
+function renderTopPairs(matrix, names) {
+  const pairs = [];
+  for (let i = 0; i < names.length; i++) {
+    for (let j = i + 1; j < names.length; j++) {
+      if (matrix[i][j] > 0) {
+        pairs.push({ a: names[i], b: names[j], count: matrix[i][j] });
+      }
+    }
+  }
+  pairs.sort((a, b) => b.count - a.count);
+  const top10 = pairs.slice(0, 10);
+
+  d3.select("#top-pairs").html('');
+
+  if (top10.length === 0) {
+    d3.select("#top-pairs").html('<div class="no-selection">No pair data for this selection</div>');
+    return;
+  }
+
+  const maxCount = top10[0].count;
+
+  d3.select("#top-pairs")
+    .selectAll(".pair-item")
+    .data(top10)
+    .join("div")
+    .attr("class", "pair-item")
+    .html(d => {
+      const pct = (d.count / maxCount) * 100;
+      return `
+        <div class="pair-label">${d.a} & ${d.b}</div>
+        <div class="pair-bar-container">
+          <div class="pair-bar-fill" style="width: ${pct}%"></div>
+        </div>
+        <div class="pair-value">${d3.format(",")(d.count)} scenes</div>
+      `;
+    });
 }
