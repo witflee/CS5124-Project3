@@ -169,6 +169,81 @@ an, etc.) is filtered to focus analyses on meaningful vocabulary.
 Level 2 works on the same top 25 characters as Level 1, ensuring
 consistency across the dashboard.
 
+## Tasks supported (Level 4 — Inside The Office)
+Two views that exploit two pieces of the dataset Levels 1 and 2 ignore:
+the raw `line` text (for free-text search) and the per-episode `scene`
+column (for co-presence analysis).
+
+### A. Phrase tracker — "When does a line catch on?"
+*The Office* is a show built on running gags ("That's what she said",
+"False", "Bears, beets…", "Identity theft is not a joke, Jim", "Parkour",
+"I declare bankruptcy"). The view answers: **when did this gag start,
+when did it die, and which characters carry it?**
+
+- **Search box + quick-pick chips** — chips for famous catchphrases avoid
+  spelling pitfalls; the search box covers anything else.
+- **Stat strip** — total uses, # episodes that contain it, first
+  appearance (`S?·E?`), last appearance, and the peak season.
+- **Episode timeline** — one bar per episode along the chronological
+  X axis with season dividers carried over from the heatmap, so users
+  can map between Level 1 and Level 4 visually. Empty episodes appear
+  as gaps — exactly what you need when asking "when does it disappear?"
+- **Top-speakers ranking** — a small bar list shows who said the phrase
+  most. Bars are the right channel for a strict ranking.
+
+```
+Sketch:
+[ search box ............... ] [Search]
+[ "that's what she said" ] [ "false" ] [ "parkour" ] [ ... ]
+┌───────┬───────┬────────────┬──────────┬──────────────┐
+│ 142   │ 76    │ S2·E2      │ S9·E20   │ S5 (38)      │
+│ uses  │ eps   │ first use  │ last use │ peak season  │
+└───────┴───────┴────────────┴──────────┴──────────────┘
+freq:  · ··· ····· ··  ·  ·· ·   ·· ·  ·    (chronological, S1→S9)
+       S1 |  S2  |  S3  |  S4  |  S5  | ...
+top: Michael ████████  Dwight ███  Andy ██  Pam ▌  ...
+```
+
+### B. Character co-scene matrix — "Who actually talks to whom?"
+"Who's important?" (Level 1) is different from "who interacts with
+whom?". Two characters can both appear in many episodes without ever
+sharing a scene — the show has clear sub-cliques (the salespeople, the
+accountants, the warehouse, corporate visitors).
+
+A 25 × 25 matrix is the right encoding because:
+- It shows **all** pairs at once — cliques pop out as bright rectangular
+  blocks, isolates as dim rows.
+- The **diagonal** is set to "all scenes the character is in", so each
+  row/column doubles as a marginal total.
+- Both axes are sorted in the same order as the Level 1 bar chart, so
+  the eye finds Michael at the top-left automatically.
+- **Click any cell** to drill in: a small bar list shows the most
+  common (non-stopword) words that *either* character speaks
+  *only when both are in the scene together*. To compare "what does
+  Pam say to Jim vs. what does Pam say to Michael?", click the (Pam, Jim)
+  cell, then the (Pam, Michael) cell.
+
+```
+Sketch:                M D J P A …
+            Michael    ░ █ █ █ █ ←row = "everyone Michael shares scenes with"
+            Dwight     █ ░ █ █ █
+            Jim        █ █ ░ █ █
+            Pam        █ █ █ ░ ▓ ←(click cell → words Pam & Andy use together)
+            …
+```
+
+### Pre-processing (Level 4)
+- **Scene index.** On load, every row is bucketed by `(season, episode,
+  scene)`; for each scene we record the set of speakers and a list of
+  (speaker, line) pairs. About 18,000 distinct scenes.
+- **Co-scene matrix.** A 25 × 25 integer matrix is built in one pass:
+  for every pair of speakers in a scene we increment `M[i][j]` and
+  `M[j][i]`; the diagonal `M[i][i]` is set to the total scenes that
+  character is in.
+- **Phrase search.** Case-insensitive substring match on the raw line
+  text (no normalization beyond lowercasing) so users can search exactly
+  what they remember hearing — including punctuation if they want to.
+
 ## Credits
 - Dataset: `The-Office-Lines-V4.csv` (transcribed dialogue from all 186
   episodes).
