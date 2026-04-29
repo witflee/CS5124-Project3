@@ -186,6 +186,50 @@
     </div>
   </section>
 
+  <section class="level-3">
+    <h2 class="section-title">Who shares the screen? <span class="level-badge">Level 3</span></h2>
+
+    <div class="controls">
+      <div class="control-group">
+        <label for="season-select-l3">Season filter</label>
+        <select id="season-select-l3">
+          <option value="all">All seasons</option>
+          <option value="1">Season 1</option>
+          <option value="2">Season 2</option>
+          <option value="3">Season 3</option>
+          <option value="4">Season 4</option>
+          <option value="5">Season 5</option>
+          <option value="6">Season 6</option>
+          <option value="7">Season 7</option>
+          <option value="8">Season 8</option>
+          <option value="9">Season 9</option>
+        </select>
+      </div>
+      <div class="control-group control-actions">
+        <button id="reset-l3-btn" type="button">Reset</button>
+      </div>
+    </div>
+
+    <div class="viz-level3">
+      <div class="panel panel-chord">
+        <h3>Character co-occurrence <span class="panel-sub" id="chord-subtitle">&mdash; all seasons</span></h3>
+        <p class="caption">
+          Chord thickness shows how often two characters share a scene.
+          Hover a character arc to isolate their connections; hover a chord for details.
+        </p>
+        <div id="chord-chart" class="chart"></div>
+      </div>
+
+      <div class="panel panel-pairs">
+        <h3>Strongest character pairs</h3>
+        <p class="caption">
+          Top 10 character pairs ranked by number of shared scenes.
+        </p>
+        <div id="top-pairs" class="chart"></div>
+      </div>
+    </div>
+  </section>
+
   <section class="level-4">
     <h2 class="section-title">Inside The Office <span class="level-badge">Level 4</span></h2>
     <p class="section-intro">
@@ -240,46 +284,6 @@
 
         <h4 class="sub-h"><span id="pair-title">Click a cell above to inspect a pair</span></h4>
         <div id="pair-words" class="chart"></div>
-  <section class="level-3">
-    <h2 class="section-title">Who shares the screen? <span class="level-badge">Level 3</span></h2>
-
-    <div class="controls">
-      <div class="control-group">
-        <label for="season-select-l3">Season filter</label>
-        <select id="season-select-l3">
-          <option value="all">All seasons</option>
-          <option value="1">Season 1</option>
-          <option value="2">Season 2</option>
-          <option value="3">Season 3</option>
-          <option value="4">Season 4</option>
-          <option value="5">Season 5</option>
-          <option value="6">Season 6</option>
-          <option value="7">Season 7</option>
-          <option value="8">Season 8</option>
-          <option value="9">Season 9</option>
-        </select>
-      </div>
-      <div class="control-group control-actions">
-        <button id="reset-l3-btn" type="button">Reset</button>
-      </div>
-    </div>
-
-    <div class="viz-level3">
-      <div class="panel panel-chord">
-        <h3>Character co-occurrence <span class="panel-sub" id="chord-subtitle">&mdash; all seasons</span></h3>
-        <p class="caption">
-          Chord thickness shows how often two characters share a scene.
-          Hover a character arc to isolate their connections; hover a chord for details.
-        </p>
-        <div id="chord-chart" class="chart"></div>
-      </div>
-
-      <div class="panel panel-pairs">
-        <h3>Strongest character pairs</h3>
-        <p class="caption">
-          Top 10 character pairs ranked by number of shared scenes.
-        </p>
-        <div id="top-pairs" class="chart"></div>
       </div>
     </div>
   </section>

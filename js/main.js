@@ -239,9 +239,12 @@ d3.select("#season-select-l3").on("change", function () {
 
 d3.select("#reset-l2-btn").on("click", () => {
   state.l2SelectedChar = null;
+  state.selectedChar = null;
+  state.l2Mode = "all";
+  state.l2Season = "all";
   d3.select("#char-select-l2").property("value", "");
+  d3.select("input[name='l2-mode'][value='all']").property("checked", true);
   setSeasonAll("all");
-
 });
 
 d3.select("#reset-l3-btn").on("click", () => {
@@ -257,31 +260,6 @@ d3.select("#reset-l3-btn").on("click", () => {
     .attr("class", "character-option")
     .attr("value", d => d)
     .text(d => d);
-
-  d3.select("#char-select-l2").on("change", function () {
-    state.l2SelectedChar = this.value || null;
-    renderLevel2();
-  });
-
-  d3.selectAll("input[name='l2-mode']").on("change", function () {
-    state.l2Mode = this.value;
-    renderLevel2();
-  });
-
-  d3.select("#reset-l2-btn").on("click", () => {
-    state.l2SelectedChar = null;
-    state.l2Mode = "all";
-    state.l2Season = "all";
-    d3.select("#char-select-l2").property("value", "");
-    d3.select("input[name='l2-mode'][value='all']").property("checked", true);
-    d3.select("#season-select-l2").property("value", "all");
-    renderLevel2();
-  });
-
-  d3.select("#season-select-l2").on("change", function () {
-    state.l2Season = this.value;
-    renderLevel2();
-  });
 
   const runPhraseSearch = () => {
     state.l4Query = (d3.select("#phrase-input").property("value") || "").trim();
