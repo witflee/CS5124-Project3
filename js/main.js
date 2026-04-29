@@ -165,22 +165,45 @@ d3.csv("data/The-Office-Lines-V4.csv").then(raw => {
 });
 
 function setupControls() {
-  d3.select("#season-select").on("change", function () {
-    state.season = this.value;
-    render();
-  });
   d3.selectAll("input[name='metric']").on("change", function () {
     state.metric = this.value;
     render();
   });
+
+  d3.select("#season-select").on("change", function () {
+  setSeasonAll(this.value);
+});
+
+d3.select("#season-select-l2").on("change", function () {
+  setSeasonAll(this.value);
+});
+
+d3.select("#season-select-shared").on("change", function () {
+  setSeasonAll(this.value);
+});
+
+d3.select("#season-select-l3").on("change", function () {
+  setSeasonAll(this.value);
+});
+
   d3.select("#reset-btn").on("click", () => {
-    state.season = "all";
-    state.metric = "lines";
-    state.selectedChar = null;
-    d3.select("#season-select").property("value", "all");
-    d3.select("input[name='metric'][value='lines']").property("checked", true);
-    render();
-  });
+  state.metric = "lines";
+  state.selectedChar = null;
+  d3.select("input[name='metric'][value='lines']").property("checked", true);
+  setSeasonAll("all");  // handles season + render
+});
+
+d3.select("#reset-l2-btn").on("click", () => {
+  state.l2SelectedChar = null;
+  state.l2Mode = "all";
+  d3.select("#char-select-l2").property("value", "");
+  d3.select("input[name='l2-mode'][value='all']").property("checked", true);
+  setSeasonAll("all");  // handles season + render
+});
+
+d3.select("#reset-l3-btn").on("click", () => {
+  setSeasonAll("all");  // handles season + render
+});
 
   // Level 2 controls
   const charOptions = characters.map(c => c.name);
@@ -200,33 +223,7 @@ function setupControls() {
     state.l2Mode = this.value;
     renderLevel2();
   });
-
-  d3.select("#reset-l2-btn").on("click", () => {
-    state.l2SelectedChar = null;
-    state.l2Mode = "all";
-    state.l2Season = "all";
-    d3.select("#char-select-l2").property("value", "");
-    d3.select("input[name='l2-mode'][value='all']").property("checked", true);
-    d3.select("#season-select-l2").property("value", "all");
-    renderLevel2();
-  });
-
-  d3.select("#season-select-l2").on("change", function () {
-    state.l2Season = this.value;
-    renderLevel2();
-  });
-
-  // Level 3 controls
-  d3.select("#season-select-l3").on("change", function () {
-    state.l3Season = this.value;
-    renderLevel3();
-  });
-
-  d3.select("#reset-l3-btn").on("click", () => {
-    state.l3Season = "all";
-    d3.select("#season-select-l3").property("value", "all");
-    renderLevel3();
-  });
+  
 }
 
 function render() {
@@ -521,6 +518,16 @@ function computeStats(seasonFilter) {
     episodeCount: c.episodes.size,
   }));
 }
+function setSeasonAll(value) {
+  state.season    = value;
+  state.l2Season  = value;
+  state.l3Season  = value;
+  d3.select("#season-select").property("value", value);
+  d3.select("#season-select-l2").property("value", value);
+  d3.select("#season-select-shared").property("value", value);
+  d3.select("#season-select-l3").property("value", value);
+  render();
+}
 
 function computeSeasonRanges(epX, cellW) {
   const ranges = [];
@@ -722,6 +729,7 @@ function renderSeasonalComparison(lines, seasonFilter) {
   const topWords = allWords.map(d => d.word);
 
   for (let season = 1; season <= 9; season++) {
+    if (state.l2Mode === 'by-season' && state.l2Season !== 'all' && season !== +state.l2Season) continue;
     const seasonLines = lines.filter(d => d.season === season);
     if (seasonLines.length === 0) continue;
     
@@ -740,9 +748,9 @@ function renderSeasonalComparison(lines, seasonFilter) {
     return;
   }
 
-  const margin = { top: 10, right: 10, bottom: 40, left: 50 };
+  const margin = { top: 10, right: 5, bottom: 200, left: 50 };
   const width = 520 - margin.left - margin.right;
-  const height = 280 - margin.top - margin.bottom;
+  const height = 500 - margin.top - margin.bottom;
 
   d3.select("#seasonal-chart").selectAll("*").remove();
 
@@ -803,7 +811,7 @@ function renderSeasonalComparison(lines, seasonFilter) {
     .style("font-size", "11px");
 
   const legend = g.append("g")
-    .attr("transform", `translate(${width - 120}, -8)`);
+    .attr('transform', `translate(0, ${height + 50})`);
 
   topWords.forEach((word, i) => {
     legend.append("rect")
