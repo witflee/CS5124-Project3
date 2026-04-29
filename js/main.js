@@ -808,8 +808,8 @@ function renderSeasonalComparison(lines, seasonFilter) {
     return;
   }
 
-  const margin = { top: 10, right: 5, bottom: 200, left: 50 };
-  const width = 520 - margin.left - margin.right;
+  const margin = { top: 10, right: 5, bottom: 200, left: 60 };
+  const width = 750 - margin.left - margin.right;
   const height = 500 - margin.top - margin.bottom;
 
   d3.select("#seasonal-chart").selectAll("*").remove();
@@ -837,7 +837,10 @@ function renderSeasonalComparison(lines, seasonFilter) {
     .range([0, x.bandwidth()])
     .padding(0.1);
 
-  const colors = d3.schemeSet3;
+  const colors = [
+  "#b3582a", "#2c6e8a", "#4a7c59", "#6a4a2f", "#8a4a7c",
+  "#2c8a7c", "#8a6a2c", "#4a6a8a", "#7c2c4a", "#2c4a8a"
+];
   const colorScale = d3.scaleOrdinal()
     .domain(topWords)
     .range(colors);
@@ -865,10 +868,26 @@ function renderSeasonalComparison(lines, seasonFilter) {
     .attr("transform", `translate(0,${height})`)
     .call(d3.axisBottom(x))
     .style("font-size", "11px");
+  g.append("text")
+  .attr("x", width / 2)
+  .attr("y", height + 35)
+  .attr("text-anchor", "middle")
+  .style("font-size", "11px")
+  .style("fill", "#5a3e2b")
+  .text("Season");
 
   g.append("g")
     .call(d3.axisLeft(y).ticks(4))
     .style("font-size", "11px");
+
+  g.append("text")
+  .attr("transform", "rotate(-90)")
+  .attr("x", -height / 2)
+  .attr("y", -40)
+  .attr("text-anchor", "middle")
+  .style("font-size", "11px")
+  .style("fill", "#5a3e2b")
+  .text("Word frequency");
 
   const legend = g.append("g")
     .attr('transform', `translate(0, ${height + 50})`);
